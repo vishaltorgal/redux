@@ -8,6 +8,7 @@
 5. [Extra Reducer (createAsyncThunk)](#5-extra-reducer-createasyncthunk)
 6. [createEntityAdapter](#6-createentityadapter)
 7. [Redux Persist](#7-redux-persist)
+8. [How to Dubug Redux (DevTools)](#8-how-to-dubug-redux-devtools)
 
 
 ## 1. What is redux
@@ -646,3 +647,38 @@ import { PersistGate } from "redux-persist/integration/react";
 ### ⚠️ Important Note
 - Sensitive tokens without encryption
 - Passwords
+
+
+## 8. How to Dubug Redux (DevTools)
+
+### Use Redux DevTools
+
+***What It Shows:***
+
+- Every dispatched action
+- Previous state
+- Next state
+- Time-travel debugging
+- Action payloads
+
+### ✅ If Using Redux Toolkit
+Redux DevTools is automatically enabled in development mode.
+
+### 🧠 How To Use It
+
+- Install browser extension:
+- Chrome → “Redux DevTools”
+- Open browser DevTools
+- Go to “Redux” tab
+
+### Use Console Logs
+
+```jsx
+builder.addCase(fetchUsers.fulfilled, (state, action) => {
+  console.log("Payload:", action.payload);
+  usersAdapter.setAll(state, action.payload);
+});
+
+const users = useSelector(state => state.users);
+console.log(users);
+```
