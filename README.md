@@ -5,7 +5,7 @@
 2. [What is redux Toolkit](#2-what-is-redux-toolkit)
 3. [Differences with Redux vs Redux Toolkit](#3-differences-with-redux-vs-redux-toolkit)
 4. [Two Slices](#4-two-slices)
-5. [Extra Reducer](#5-extra-reducer)
+5. [Extra Reducer (createAsyncThunk)](#5-extra-reducer-createasyncthunk)
 6. [createEntityAdapter](#6-createentityadapter)
 
 
@@ -317,7 +317,7 @@ root.render(
 );
 ```
 
-## 5. Extra Reducer
+## 5. Extra Reducer (createAsyncThunk)
 
 - Think of reducers as your slice's "private" logic—they only respond to actions defined inside that same slice.
 - ExtraReducers, on the other hand, are the "public" listeners. they allow your slice to respond to actions that were defined outside of it, such as actions from other slices or asynchronous tasks (like fetching data).
