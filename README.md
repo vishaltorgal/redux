@@ -7,6 +7,7 @@
 4. [Two Slices](#4-two-slices)
 5. [Extra Reducer (createAsyncThunk)](#5-extra-reducer-createasyncthunk)
 6. [createEntityAdapter](#6-createentityadapter)
+7. [Redux Persist](#7-redux-persist)
 
 
 ## 1. What is redux
@@ -572,3 +573,76 @@ extraReducers: (builder) => {
   });
 }
 ```
+
+## 7. Redux Persist
+
+- 💾 Saves your Redux state to storage (like localStorage)
+- 🔁 Restores it automatically when the page reloads
+
+### 🧠 Why Do We Need It?
+
+Normally, Redux state lives in memory only.
+
+So when you refresh the page:
+
+- ❌ All Redux state is lost
+- ❌ User gets logged out
+- ❌ Cart becomes empty
+- ❌ App resets
+
+### Without redux-persist
+
+- User logs in
+- Redux stores user info
+- User refreshes page
+- ❌ User is logged out
+
+### With redux-persist
+
+- User logs in
+- Redux stores user info
+- redux-persist saves it to localStorage
+- User refreshes page
+- ✅ State is restored automatically
+
+### Configure Store
+```jsx
+import { configureStore } from "@reduxjs/toolkit";
+import { persistStore, persistReducer } from "redux-persist";
+import storage from "redux-persist/lib/storage"; // localStorage
+import rootReducer from "./rootReducer";
+
+const persistConfig = {
+  key: "root",
+  storage,
+};
+
+const persistedReducer = persistReducer(persistConfig, rootReducer);
+
+export const store = configureStore({
+  reducer: persistedReducer,
+});
+
+export const persistor = persistStore(store);
+```
+
+### Wrap App
+```jsx
+import { PersistGate } from "redux-persist/integration/react";
+
+<PersistGate loading={null} persistor={persistor}>
+  <App />
+</PersistGate>
+```
+
+
+### 🎯 Real Life Use Cases
+- E-commerce cart
+- Login session
+- Dark/light theme preference
+- Multi-step forms
+- Offline support
+
+### ⚠️ Important Note
+- Sensitive tokens without encryption
+- Passwords
