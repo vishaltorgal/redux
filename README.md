@@ -5,7 +5,8 @@
 2. [What is redux Toolkit](#2-what-is-redux-toolkit)
 3. [Differences with Redux vs Redux Toolkit](#3-differences-with-redux-vs-redux-toolkit)
 4. [Two Slices](#4-two-slices)
-5. 
+5. [Extra Reducer](#5-extra-reducer)
+6. [createEntityAdapter](#6-createentityadapter)
 
 
 ## 1. What is redux
@@ -315,3 +316,209 @@ root.render(
   </Provider>
 );
 ```
+
+## 5. Extra Reducer
+
+- Think of reducers as your slice's "private" logic—they only respond to actions defined inside that same slice.
+- ExtraReducers, on the other hand, are the "public" listeners. they allow your slice to respond to actions that were defined outside of it, such as actions from other slices or asynchronous tasks (like fetching data).
+
+Simple Redux Toolkit example with API call using createAsyncThunk and extraReducers.
+
+### userSlice.js
+```jsx
+import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
+
+// Async API call using createAsyncThunk
+export const fetchUsers = createAsyncThunk(
+  'users/fetchUsers',  //action type prefix
+  async () => {
+    const response = await fetch('https://jsonplaceholder.typicode.com/users');
+    if (!response.ok) throw new Error('Failed to fetch users');
+    return response.json(); // returned data becomes action.payload
+  }
+);
+
+const userSlice = createSlice({
+  name: 'users',
+  initialState: { list: [], status: 'idle', error: null },
+  reducers: {}, // no regular reducers needed for this example
+  extraReducers: (builder) => {
+    builder
+      .addCase(fetchUsers.pending, (state) => { state.status = 'loading'; })
+      .addCase(fetchUsers.fulfilled, (state, action) => {
+        state.status = 'succeeded';
+        state.list = action.payload;
+      })
+      .addCase(fetchUsers.rejected, (state, action) => {
+        state.status = 'failed';
+        state.error = action.error.message;
+      });
+  }
+});
+
+export const userReducer = userSlice.reducer;
+```
+
+### store.js
+```jsx
+import { configureStore } from '@reduxjs/toolkit';
+import { userReducer } from './userSlice';
+
+export const store = configureStore({
+  reducer: { users: userReducer }
+});
+```
+
+### UserListComponent.jsx
+```jsx
+import React, { useEffect } from 'react';
+import { useSelector, useDispatch } from 'react-redux';
+import { fetchUsers } from './userSlice';
+
+export default function UserList() {
+  const { list, status, error } = useSelector(state => state.users);
+  const dispatch = useDispatch();
+
+  useEffect(() => {
+    dispatch(fetchUsers()); // call API on component mount
+  }, [dispatch]);
+
+  if (status === 'loading') return <p>Loading...</p>;
+  if (status === 'failed') return <p>Error: {error}</p>;
+
+  return (
+    <div>
+      <h2>Users List</h2>
+      <ul>
+        {list.map(user => (
+          <li key={user.id}>{user.name} ({user.email})</li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+```
+
+### index.js
+```jsx
+import React from 'react';
+import ReactDOM from 'react-dom/client';
+import { Provider } from 'react-redux';
+import { store } from './store';
+import UserList from './UserListComponent';
+
+const root = ReactDOM.createRoot(document.getElementById('root'));
+root.render(
+  <Provider store={store}>
+    <UserList />
+  </Provider>
+);
+```
+
+### ✅ Explanation
+
+- createAsyncThunk handles async API calls and generates pending, fulfilled, rejected actions.
+- extraReducers listens to those actions to update the state (status, list, error).
+- Component uses useEffect to dispatch the async thunk when mounted.
+- Redux Toolkit + createAsyncThunk removes manual dispatching of multiple actions and avoids boilerplate.
+
+
+### 'users/fetchUsers' is the “prefix” for the action type.
+Redux Toolkit automatically creates three action types for the async flow:
+
+| Lifecycle | Generated Action Type          |
+| --------- | ------------------------------ |
+| Pending   | `'users/fetchUsers/pending'`   |
+| Fulfilled | `'users/fetchUsers/fulfilled'` |
+| Rejected  | `'users/fetchUsers/rejected'`  |
+
+
+## 6. createEntityAdapter
+
+### userSlice.js
+```jsx
+import { createSlice, createEntityAdapter } from '@reduxjs/toolkit';
+
+// 1. Create an adapter
+const usersAdapter = createEntityAdapter();
+
+// 2. Create the slice
+const userSlice = createSlice({
+  name: 'users',
+  initialState: usersAdapter.getInitialState(),
+  reducers: {
+    addUser: usersAdapter.addOne,
+    removeUser: usersAdapter.removeOne
+  }
+});
+
+// 3. Export actions and reducer
+export const { addUser, removeUser } = userSlice.actions;
+export const userReducer = userSlice.reducer;
+
+// 4. Export selectors
+export const { selectAll: selectAllUsers } = usersAdapter.getSelectors(state => state.users);
+```
+
+### store.js
+```jsx
+import { configureStore } from '@reduxjs/toolkit';
+import { userReducer } from './userSlice';
+
+export const store = configureStore({
+  reducer: { users: userReducer }
+});
+```
+
+### UserListComponent.jsx
+```jsx
+import React from 'react';
+import { useSelector, useDispatch } from 'react-redux';
+import { addUser, removeUser, selectAllUsers } from './userSlice';
+
+export default function UserList() {
+  const users = useSelector(selectAllUsers);
+  const dispatch = useDispatch();
+
+  return (
+    <div>
+      <h2>Users</h2>
+      <ul>
+        {users.map(u => <li key={u.id}>{u.name} <button onClick={() => dispatch(removeUser(u.id))}>Delete</button></li>)}
+      </ul>
+      <button onClick={() => dispatch(addUser({ id: Date.now(), name: 'New User' }))}>
+        Add User
+      </button>
+    </div>
+  );
+}
+```
+
+### ✅ How it works
+createEntityAdapter stores users like this:
+```jsx
+{
+  ids: [101, 102],
+  entities: {
+    101: { id: 101, name: 'Alice' },
+    102: { id: 102, name: 'Bob' }
+  }
+}
+```
+
+### Common Reducer Functions
+
+| Helper                      | What it does                                      |
+| --------------------------- | ------------------------------------------------- |
+| `addOne(state, action)`     | Adds a single entity (`action.payload`)           |
+| `addMany(state, action)`    | Adds multiple entities (`action.payload` array)   |
+| `setAll(state, action)`     | Replaces all entities with `action.payload` array |
+| `updateOne(state, action)`  | Updates a single entity using `{ id, changes }`   |
+| `updateMany(state, action)` | Updates multiple entities                         |
+| `removeOne(state, action)`  | Removes entity by ID (`action.payload`)           |
+| `removeMany(state, action)` | Removes multiple entities by ID                   |
+| `upsertOne(state, action)`  | Adds or updates one entity                        |
+| `upsertMany(state, action)` | Adds or updates multiple entities                 |
+
+- dispatch(addUser({ id: 1, name: 'Alice' })) → adds a new user
+- dispatch(removeUser(1)) → removes the user with id = 1
