@@ -522,3 +522,53 @@ createEntityAdapter stores users like this:
 
 - dispatch(addUser({ id: 1, name: 'Alice' })) → adds a new user
 - dispatch(removeUser(1)) → removes the user with id = 1
+- ❌ They do NOT modify your database.
+- ✅ They only modify the Redux store (frontend state in memory).
+- ✅ Update the Redux state
+- ✅ Change ids and entities
+- ❌ Do NOT call an API
+- ❌ Do NOT touch your backend/database
+- ❌ Do NOT persist anything automatically
+
+### 🔥 Real Production Flow
+1️⃣ Call Backend API
+```jsx
+DELETE /api/users/5
+```
+
+2️⃣ If API succeeds → Update Redux store
+```jsx
+builder.addCase(deleteUser.fulfilled, (state, action) => {
+  usersAdapter.removeOne(state, action.payload);
+});
+```
+Now UI updates.
+
+### 🧠 Why This Order?
+`Because:`
+
+- Database is the source of truth
+- Redux is just a frontend copy
+- You don’t want to remove it from UI if backend fails.
+
+### 🧱 Full Real Example
+
+Async thunk
+```jsx
+export const deleteUser = createAsyncThunk(
+  "users/deleteUser",
+  async (id) => {
+    await fetch(`/api/users/${id}`, { method: "DELETE" });
+    return id; // return id so reducer can remove it
+  }
+);
+```
+
+In slice
+```jsx
+extraReducers: (builder) => {
+  builder.addCase(deleteUser.fulfilled, (state, action) => {
+    usersAdapter.removeOne(state, action.payload);
+  });
+}
+```
