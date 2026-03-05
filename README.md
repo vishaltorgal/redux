@@ -9,6 +9,7 @@
 6. [createEntityAdapter](#6-createentityadapter)
 7. [Redux Persist](#7-redux-persist)
 8. [How to Dubug Redux (DevTools)](#8-how-to-dubug-redux-devtools)
+9. [Redux Thunk vs Redux Saga](#9-redux-thunk-vs-redux-saga)
 
 
 ## 1. What is redux
@@ -755,3 +756,153 @@ builder.addCase(fetchUsers.fulfilled, (state, action) => {
 const users = useSelector(state => state.users);
 console.log(users);
 ```
+
+
+## 9. Redux thunk vs redux saga
+
+Redux Thunk and Redux Saga are middleware used with Redux to handle asynchronous operations like API calls.
+
+### Redux Thunk
+Redux Thunk lets you write functions inside dispatch() to handle async logic.
+
+```jsx
+export const fetchUsers = () => async (dispatch) => {
+  dispatch({ type: "FETCH_USERS_LOADING" });
+
+  const res = await fetch("/api/users");
+  const data = await res.json();
+
+  dispatch({ type: "FETCH_USERS_SUCCESS", payload: data });
+};
+```
+***Dispatch***
+```jsx
+dispatch(fetchUsers());
+```
+
+### Characteristics
+
+- Simple to learn
+- Uses async / await
+- Less boilerplate
+- Best for small to medium apps
+
+
+### Redux Saga
+Redux Saga uses generator functions to handle async flows.
+```jsx
+import { call, put, takeEvery } from "redux-saga/effects";
+
+function* fetchUsers() {
+  const response = yield call(fetch, "/api/users");
+  const data = yield response.json();
+
+  yield put({ type: "FETCH_USERS_SUCCESS", payload: data });
+}
+
+function* userSaga() {
+  yield takeEvery("FETCH_USERS_REQUEST", fetchUsers);
+}
+```
+***Dispatch***
+```jsx
+dispatch({ type: "FETCH_USERS_REQUEST" });
+```
+
+### Characteristics
+
+- Uses generators (function*)
+- More powerful for complex flows
+- Handles background tasks easily
+- More boilerplate
+
+### Key Differences
+| Feature        | Redux Thunk | Redux Saga    |
+| -------------- | ----------- | ------------- |
+| Concept        | Functions   | Generators    |
+| Complexity     | Easy        | Harder        |
+| Code size      | Less        | More          |
+| Learning curve | Low         | High          |
+| Async handling | async/await | yield effects |
+| Best for       | Simple apps | Complex apps  |
+
+
+`Usecase of Saga`
+
+### Cancel Previous API Requests
+Imagine a search bar where the user types rapidly. With a Thunk, you might fire 10 API calls for 10 keystrokes. With Saga, you can use takeLatest or delay to automatically cancel previous pending requests and only execute the last one.
+
+`Saga Power`: It has a built-in takeLatest effect that kills the old "process" the moment a new one starts.
+
+```jsx
+import { takeLatest, call, put } from "redux-saga/effects";
+
+function* searchUsers(action) {
+  const res = yield call(fetch, `/api/users?q=${action.payload}`);
+  const data = yield res.json();
+  yield put({ type: "SEARCH_SUCCESS", payload: data });
+}
+
+function* watcherSaga() {
+  yield takeLatest("SEARCH_REQUEST", searchUsers);
+}
+```
+
+### Multiple API Calls in Sequence
+
+Saga handles sequential workflows cleanly.
+
+```jsx
+function* checkout() {
+  const cart = yield call(validateCart);
+  const order = yield call(createOrder, cart);
+  yield call(processPayment, order);
+  yield call(sendEmail, order);
+}
+```
+
+### Parallel API Calls
+
+Example: Dashboard loads multiple APIs at once. Saga can run them in parallel.
+
+- users
+- notifications
+- analytics
+- messages
+
+```jsx
+import { all, call } from "redux-saga/effects";
+
+function* loadDashboard() {
+  const [users, messages] = yield all([
+    call(fetchUsers),
+    call(fetchMessages)
+  ]);
+}
+```
+
+### Retry API Calls
+Network failure retry 3 times.
+
+```jsx
+import { retry } from "redux-saga/effects";
+
+function* fetchUsers() {
+  const data = yield retry(3, 2000, api.getUsers);
+}
+```
+
+### Background Tasks / Polling
+Refresh notifications every 10 seconds.
+
+```jsx
+import { delay } from "redux-saga/effects";
+
+function* pollNotifications() {
+  while (true) {
+    yield call(fetchNotifications);
+    yield delay(10000);
+  }
+}
+```
+
