@@ -326,101 +326,172 @@ root.render(
 
 Simple Redux Toolkit example with API call using createAsyncThunk and extraReducers.
 
-### userSlice.js
+### userSlice.js (GET, UPDATE, DELETE)
 ```jsx
-import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
+import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 
-// Async API call using createAsyncThunk
-export const fetchUsers = createAsyncThunk(
-  'users/fetchUsers',  //action type prefix
+const API = "https://jsonplaceholder.typicode.com/users";
+
+// GET USERS
+export const getUsers = createAsyncThunk(
+  "users/getUsers",
   async () => {
-    const response = await fetch('https://jsonplaceholder.typicode.com/users');
-    if (!response.ok) throw new Error('Failed to fetch users');
-    return response.json(); // returned data becomes action.payload
+    const res = await fetch(API);
+    return res.json();
+  }
+);
+
+// UPDATE USER
+export const updateUser = createAsyncThunk(
+  "users/updateUser",
+  async (user) => {
+    const res = await fetch(`${API}/${user.id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(user)
+    });
+    return res.json();
+  }
+);
+
+// DELETE USER
+export const deleteUser = createAsyncThunk(
+  "users/deleteUser",
+  async (id) => {
+    await fetch(`${API}/${id}`, {
+      method: "DELETE"
+    });
+    return id;
   }
 );
 
 const userSlice = createSlice({
-  name: 'users',
-  initialState: { list: [], status: 'idle', error: null },
-  reducers: {}, // no regular reducers needed for this example
+  name: "users",
+  initialState: {
+    users: [],
+    loading: false
+  },
+  reducers: {},
   extraReducers: (builder) => {
+
     builder
-      .addCase(fetchUsers.pending, (state) => { state.status = 'loading'; })
-      .addCase(fetchUsers.fulfilled, (state, action) => {
-        state.status = 'succeeded';
-        state.list = action.payload;
+
+      // GET
+      .addCase(getUsers.pending, (state) => {
+        state.loading = true;
       })
-      .addCase(fetchUsers.rejected, (state, action) => {
-        state.status = 'failed';
-        state.error = action.error.message;
+      .addCase(getUsers.fulfilled, (state, action) => {
+        state.loading = false;
+        state.users = action.payload;
+      })
+
+      // UPDATE
+      .addCase(updateUser.fulfilled, (state, action) => {
+        const index = state.users.findIndex(
+          (u) => u.id === action.payload.id
+        );
+        if (index !== -1) {
+          state.users[index] = action.payload;
+        }
+      })
+
+      // DELETE
+      .addCase(deleteUser.fulfilled, (state, action) => {
+        state.users = state.users.filter(
+          (u) => u.id !== action.payload
+        );
       });
+
   }
 });
 
-export const userReducer = userSlice.reducer;
+export default userSlice.reducer;
 ```
 
 ### store.js
 ```jsx
-import { configureStore } from '@reduxjs/toolkit';
-import { userReducer } from './userSlice';
+import { configureStore } from "@reduxjs/toolkit";
+import userReducer from "./userSlice";
 
 export const store = configureStore({
-  reducer: { users: userReducer }
+  reducer: {
+    users: userReducer
+  }
 });
-```
-
-### UserListComponent.jsx
-```jsx
-import React, { useEffect } from 'react';
-import { useSelector, useDispatch } from 'react-redux';
-import { fetchUsers } from './userSlice';
-
-export default function UserList() {
-  const { list, status, error } = useSelector(state => state.users);
-  const dispatch = useDispatch();
-
-  useEffect(() => {
-    dispatch(fetchUsers()); // call API on component mount
-  }, [dispatch]);
-
-  if (status === 'loading') return <p>Loading...</p>;
-  if (status === 'failed') return <p>Error: {error}</p>;
-
-  return (
-    <div>
-      <h2>Users List</h2>
-      <ul>
-        {list.map(user => (
-          <li key={user.id}>{user.name} ({user.email})</li>
-        ))}
-      </ul>
-    </div>
-  );
-}
 ```
 
 ### index.js
 ```jsx
-import React from 'react';
-import ReactDOM from 'react-dom/client';
-import { Provider } from 'react-redux';
-import { store } from './store';
-import UserList from './UserListComponent';
+import React from "react";
+import ReactDOM from "react-dom/client";
+import { Provider } from "react-redux";
+import { store } from "./store";
+import App from "./App";
 
-const root = ReactDOM.createRoot(document.getElementById('root'));
-root.render(
+ReactDOM.createRoot(document.getElementById("root")).render(
   <Provider store={store}>
-    <UserList />
+    <App />
   </Provider>
 );
+```
+
+### App.js (React Component)
+```jsx
+import React, { useEffect } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { getUsers, updateUser, deleteUser } from "./userSlice";
+
+function App() {
+
+  const dispatch = useDispatch();
+  const { users, loading } = useSelector((state) => state.users);
+
+  useEffect(() => {
+    dispatch(getUsers());
+  }, [dispatch]);
+
+  const handleUpdate = (user) => {
+    dispatch(updateUser({ ...user, name: "Updated Name" }));
+  };
+
+  const handleDelete = (id) => {
+    dispatch(deleteUser(id));
+  };
+
+  return (
+    <div>
+
+      <h2>User List</h2>
+
+      {loading && <p>Loading...</p>}
+
+      {users.map((user) => (
+        <div key={user.id}>
+
+          {user.name}
+
+          <button onClick={() => handleUpdate(user)}>
+            Update
+          </button>
+
+          <button onClick={() => handleDelete(user.id)}>
+            Delete
+          </button>
+
+        </div>
+      ))}
+
+    </div>
+  );
+}
+
+export default App;
 ```
 
 ### ✅ Explanation
 
 - createAsyncThunk handles async API calls and generates pending, fulfilled, rejected actions.
-- extraReducers listens to those actions to update the state (status, list, error).
+- extraReducers listens to those actions to update the state.
 - Component uses useEffect to dispatch the async thunk when mounted.
 - Redux Toolkit + createAsyncThunk removes manual dispatching of multiple actions and avoids boilerplate.
 
@@ -430,10 +501,12 @@ Redux Toolkit automatically creates three action types for the async flow:
 
 | Lifecycle | Generated Action Type          |
 | --------- | ------------------------------ |
-| Pending   | `'users/fetchUsers/pending'`   |
-| Fulfilled | `'users/fetchUsers/fulfilled'` |
-| Rejected  | `'users/fetchUsers/rejected'`  |
+| Pending   | `'users/getUsers/pending'`   |
+| Fulfilled | `'users/getUsers/fulfilled'` |
+| Rejected  | `'users/getUsers/rejected'`  |
 
+
+<br>
 
 ## 6. createEntityAdapter
 
