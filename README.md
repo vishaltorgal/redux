@@ -9,7 +9,7 @@
 6. [createEntityAdapter](#6-createentityadapter)
 7. [Redux Persist](#7-redux-persist)
 8. [How to Dubug Redux (DevTools)](#8-how-to-dubug-redux-devtools)
-9. [Redux Thunk vs Redux Saga](#9-redux-thunk-vs-redux-saga)
+9. [Redux Saga](#9-redux-saga)
 
 
 ## 1. What is redux
@@ -758,38 +758,10 @@ console.log(users);
 ```
 
 
-## 9. Redux thunk vs redux saga
+## 9. Redux saga
 
-Redux Thunk and Redux Saga are middleware used with Redux to handle asynchronous operations like API calls.
-
-### Redux Thunk
-Redux Thunk lets you write functions inside dispatch() to handle async logic.
-
-```jsx
-export const fetchUsers = () => async (dispatch) => {
-  dispatch({ type: "FETCH_USERS_LOADING" });
-
-  const res = await fetch("/api/users");
-  const data = await res.json();
-
-  dispatch({ type: "FETCH_USERS_SUCCESS", payload: data });
-};
-```
-***Dispatch***
-```jsx
-dispatch(fetchUsers());
-```
-
-### Characteristics
-
-- Simple to learn
-- Uses async / await
-- Less boilerplate
-- Best for small to medium apps
-
-
-### Redux Saga
 Redux Saga uses generator functions to handle async flows.
+
 ```jsx
 import { call, put, takeEvery } from "redux-saga/effects";
 
