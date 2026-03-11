@@ -905,4 +905,21 @@ function* pollNotifications() {
   }
 }
 ```
+### Below is a table of important features of Redux Saga with their keywords (effects).
 
+| Feature                   | Saga Keyword  | Description                                       | Use Case                      |
+| ------------------------- | ------------- | ------------------------------------------------- | ----------------------------- |
+| Listen to action          | `take`        | Waits for a specific action                       | Trigger workflow after action |
+| Run saga for every action | `takeEvery`   | Executes saga for every dispatched action         | Logging, analytics            |
+| Run only latest action    | `takeLatest`  | Cancels previous running saga and executes latest | Search API, filters           |
+| Run only first action     | `takeLeading` | Ignores new actions until current finishes        | Form submit                   |
+| Dispatch action           | `put`         | Dispatches an action to Redux store               | Update state                  |
+| Call async function       | `call`        | Calls API or async function (blocking)            | API requests                  |
+| Run task in background    | `fork`        | Starts a non-blocking background task             | Parallel processes            |
+| Wait for multiple tasks   | `join`        | Waits for forked task to finish                   | Task coordination             |
+| Cancel running task       | `cancel`      | Cancels a running saga task                       | Cancel API request            |
+| Delay execution           | `delay`       | Waits for specified time                          | Debounce, retry               |
+| Get Redux state           | `select`      | Reads state from store                            | Conditional logic             |
+| Run multiple effects      | `all`         | Runs effects in parallel                          | Multiple API calls            |
+| Race between tasks        | `race`        | Runs tasks and returns the fastest one            | Timeout handling              |
+| Channel communication     | `channel`     | Handles external events                           | WebSocket, event streams      |
