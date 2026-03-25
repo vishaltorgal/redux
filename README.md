@@ -10,6 +10,7 @@
 7. [Redux Persist](#7-redux-persist)
 8. [How to Dubug Redux (DevTools)](#8-how-to-dubug-redux-devtools)
 9. [Redux Saga](#9-redux-saga)
+10. [Redux Toolkit with Thunk](#10-redux-toolkit-with-thunk)
 
 
 ## 1. What is redux
