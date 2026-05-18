@@ -36,16 +36,20 @@ src/
 │       └── CounterComponent.jsx # React component
 └── index.js               # Entry point (ReactDOM.render)
 ```
+
 ### Redux Flow
+
+***src/features/counter/counterActions.js***
 ```jsx
-// src/features/counter/counterActions.js
 export const INCREMENT = 'INCREMENT';
 export const DECREMENT = 'DECREMENT';
 
 export const increment = () => ({ type: INCREMENT });
 export const decrement = () => ({ type: DECREMENT });
+```
 
-// src/features/counter/counterReducer.js
+***src/features/counter/counterReducer.js***
+```jsx
 import { INCREMENT, DECREMENT } from './counterActions';
 
 const initialState = { value: 0 };
@@ -60,8 +64,10 @@ export function counterReducer(state = initialState, action) {
       return state;
   }
 }
+```
 
-// src/app/store.js
+***src/app/store.js***
+```jsx
 import { createStore, combineReducers } from 'redux';
 import { counterReducer } from '../features/counter/counterReducer';
 
@@ -92,6 +98,7 @@ export default function CounterComponent() {
   );
 }
 ```
+
 ### index.js same for both
 ***src/index.js***
 ```jsx
