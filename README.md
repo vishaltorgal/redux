@@ -519,6 +519,8 @@ Redux Toolkit automatically creates three action types for the async flow:
 
 ## 6. createEntityAdapter
 
+`createEntityAdapter` provides a standardized way to store collections of data in a normalized format and gives us built-in reducers and selectors for common operations like add, update, remove, and find entities.
+
 ### userSlice.js
 ```jsx
 import { createSlice, createEntityAdapter } from '@reduxjs/toolkit';
