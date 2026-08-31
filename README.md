@@ -770,7 +770,8 @@ console.log(users);
 
 ## 9. Redux saga
 
-Redux Saga uses generator functions to handle async flows.
+- Redux Saga as a manager for API calls and other background work in a Redux application.
+- Redux Saga uses generator functions to handle async flows.
 
 ```jsx
 import { call, put, takeEvery } from "redux-saga/effects";
